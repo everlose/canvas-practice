@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>canvas练习</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        canvas {
+            width: 375px;
+            height: 180px;
+            padding: 15px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="a_canvas"></canvas>
+<script>
+var Charts = function (opt) {
+    if (typeof this === 'undefined' || this === window) {
+        return new Charts(opt);
+    }
+    this.ctx = opt.elem.getContext('2d');
+    
+    //容器宽高
+    this.canvasWidth = opt.elem.clientWidth;
+    this.canvasHeight = opt.elem.clientHeight;
+    //真实可用宽高
+    this.ctHeight = this.canvasHeight - 20;
+    this.ctWidth = this.canvasWidth;
+
+    //柱体颜色
+    this.barColor = opt.barColor || 'green';
+    //柱体上面的标注颜色
+    this.tipColor = opt.tipColor || '#666666';
+    //坐标轴文字颜色
+    this.axesColor = opt.axesColor || '#9B9B9B';
+
+    this.data = opt.data;
+    
+    //使canvas在不同分辨率屏幕上显示最佳像素
+    (function(canvas) {
+        var w = canvas.clientWidth; 
+        var h = canvas.clientHeight;
+
+        var ctx = document.createElement("canvas").getContext("2d"),
+            dpr = window.devicePixelRatio || 1,
+            bsr = ctx.webkitBackingStorePixelRatio ||
+            ctx.mozBackingStorePixelRatio ||
+            ctx.msBackingStorePixelRatio ||
+            ctx.oBackingStorePixelRatio ||
+            ctx.backingStorePixelRatio || 1;
+
+        var ratio = dpr / bsr;
+
+        canvas.width = w * ratio;
+        canvas.height = h * ratio;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        canvas.getContext('2d').setTransform(ratio, 0, 0, ratio, 0, 0);
+    })(opt.elem);
+};
+Charts.prototype = {
+    constructor: Charts,
+
+    //绘制背景
+    setBg: function () {
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'PingFangSC-Regular, Helvetica, Arial, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    },
+
+    //描绘边框
+    setBorders: function () {
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = '#A0A0A0';
+
+        // 结束边框描绘
+        this.ctx.beginPath();
+
+        //画x轴线
+        this.ctx.moveTo(0, this.ctHeight);
+        this.ctx.lineTo(this.ctWidth, this.ctHeight);
+
+        //画y轴线
+        // this.ctx.moveTo(0,20);
+        // this.ctx.lineTo(0,ctHeight);
+        // this.ctx.lineWidth = 1;
+        // this.ctx.strokeStyle = "black";
+
+        this.ctx.stroke();
+    },
+
+    //绘制柱状图形
+    setBarGraph: function () {
+        //设置背景和边框
+        this.setBg();
+        this.setBorders();
+
+        //求得高度最大值，并以此为准给其他数据确立坐标系
+        var ctx = this.ctx;
+        var max_v = 0;
+        this.data.forEach(function (v, k) {
+            if (parseInt(v.y) > max_v) {
+                max_v = parseInt(v.y);
+            }
+        });
+        max_v = max_v * 1.2;
+
+        //将数据换算为坐标
+        var grid_cols = this.data.length; //共若干列
+        var cell_width = this.ctWidth / grid_cols; //每列所占的宽度
+        var points = [];
+        this.data.forEach((v, k) => {
+            var px = cell_width *　k;
+            var py = this.ctHeight - this.ctHeight * (v.y / max_v);
+            points.push({
+                'x': px,
+                'y': py
+            });
+        });
+
+        //绘制坐标图形
+        points.forEach((obj, index) => {
+            ctx.beginPath();
+            ctx.fillStyle = this.barColor;
+            //fillRect四个参数分别为：左上角x坐标、左上角y坐标、矩形宽度、矩形高度
+            var alignLeft = cell_width / 2 - 25 / 2;
+            ctx.fillRect(obj.x + alignLeft, obj.y, 25, this.ctHeight - obj.y);
+        });
+
+        points.forEach((obj, index) =>{
+            ctx.beginPath();
+            ctx.fillStyle = this.tipColor;
+
+            //fillText四个参数分别为：输出文本、绘制文本的x坐标（相对于画布）、绘制文本的y坐标（相对于画布）、允许的最大文本宽度
+            //未解之谜，为了文字居中，x轴偏移量只要设置容器的一半就够了，即为cell_width / 2。
+            ctx.fillText(this.data[index].y, obj.x + cell_width / 2, obj.y - 10, cell_width);
+
+            ctx.fillStyle = this.axesColor;
+            ctx.fillText(this.data[index].x, obj.x + cell_width / 2, this.ctHeight + 18, cell_width);
+            //ctx.fillText('月份', ctWidth, this.ctHeight + 12); //横坐标系
+            //ctx.fillText('资金量', 0, 10); //纵坐标系
+        });
+    }
+};
+
+//http://www.cnblogs.com/shuniuniu/p/5318666.html
+var data = [{
+    x: '微店',
+    y: 188
+}, {
+    x: '官网',
+    y: 100
+}, {
+    x: '58同城',
+    y: 68
+}, {
+    x: '易车二手车',
+    y: 38
+}, {
+    x: '二手车之家',
+    y: 18
+}];
+var canvas = document.getElementById('a_canvas');
+var charts = new Charts({
+    elem: canvas,
+    data: data,
+    barColor: '#FF7340'
+});
+charts.setBarGraph();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body style="height:100%">
+    <canvas id="canvas" style="height:100%">
+        当前浏览器不支持Canvas，请更换浏览器后再试
+    </canvas>
+
+    <script type="text/javascript">
+        var WINDOW_WIDTH = 1024;
+        var WINDOW_HEIGHT = 768;
+        var RADIUS = 8;
+        var MARGIN_TOP = 0;
+        var MARGIN_LEFT = 0;        
+
+        var balls = [];
+        const colors = ["#33B5E5","#0099CC","#AA66CC","#9933CC","#99CC00","#669900","#FFBB33","#FF8800","#FF4444","#CC0000"]        
+
+        window.onload = function(){     
+            // 减去20px是为了避免浏览器出现滚动条
+            WINDOW_WIDTH = document.documentElement.clientWidth-20;
+            WINDOW_HEIGHT = document.documentElement.clientHeight-20;          
+
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext("2d");      
+
+            canvas.width = WINDOW_WIDTH;
+            canvas.height = WINDOW_HEIGHT;      
+            setInterval(
+                function(){
+                    render( context );
+                    update();
+                },
+                50
+            );
+        }       
+
+        function update(){      
+            // 点击一下画布，就增加30个小球。把点击绑定去掉就变成了彩色小球雨
+            document.getElementById("canvas").onclick = function() {
+                addBalls( MARGIN_LEFT, MARGIN_TOP , 30 )
+            }
+            updateBalls();      
+            console.log(balls.length)
+        }       
+
+        // 控制小球的运动轨迹
+        function updateBalls(){     
+
+            for( var i = 0 ; i < balls.length ; i ++ ){     
+
+                balls[i].x += balls[i].vx;
+                balls[i].y += balls[i].vy;
+                balls[i].vy += balls[i].g;      
+                // 控制小球反弹
+                if( balls[i].y >= WINDOW_HEIGHT-RADIUS ){
+                    balls[i].y = WINDOW_HEIGHT-RADIUS;
+                    balls[i].vy = - balls[i].vy*0.75;
+                }
+            }
+            // 判断小球是否在画面内，如果不在了就把小球删掉
+            var cnt = 0; // 记录还有多少个小球在画布中
+            for( var i = 0 ; i < balls.length ; i ++ )
+                if( balls[i].x + RADIUS > 0 &&
+                    balls[i].x -RADIUS < WINDOW_WIDTH && 
+                    balls[i].y - RADIUS < WINDOW_HEIGHT) // 小球还在画布中的条件
+                    balls[cnt++] = balls[i]     
+            // cnt之后的小球都在画布外，删掉
+            while( balls.length > cnt ){ 
+                balls.pop();
+            }
+
+        }       
+
+        // 配置落下的彩色球
+        function addBalls( x , y , num ){       
+
+            for( var i = 0  ; i < num ; i ++ ) {
+                var aBall = {
+                    x: x + Math.random() * WINDOW_WIDTH,
+                    y: y + Math.random() * 10,
+                    g: 1.5 + Math.random(),
+                    vx: Math.pow( -1 , Math.ceil( Math.random()*10 ) ) * 4,
+                    vy: -5,
+                    color: colors[ Math.floor( Math.random()*colors.length ) ]
+                }
+                balls.push( aBall )
+            }       
+
+        }       
+
+        // 绘制落下的彩色小球
+        function render( cxt ){     
+
+            cxt.clearRect(0,0,WINDOW_WIDTH, WINDOW_HEIGHT);     
+
+            for( var i = 0 ; i < balls.length ; i ++ ){
+                cxt.fillStyle=balls[i].color;       
+
+                cxt.beginPath();
+                cxt.arc( balls[i].x , balls[i].y , RADIUS , 0 , 2*Math.PI , true );
+                cxt.closePath();        
+
+                cxt.fill();
+            }       
+
+        }
+
+    </script>
+</body>
+</html>

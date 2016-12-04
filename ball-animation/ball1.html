@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>canvas</title>
+</head>
+<body>
+    <canvas id="myCanvas" style="border: 10px solid #aaa;display:block;margin: 50px auto">
+        当前浏览器不支持canvas功能，请升级浏览器
+    </canvas>    
+
+    <script type="text/javascript">
+        var WIDTH = 800;
+        var HEIGHT = 510; 
+        var ball = {
+            x: 712,         // 小球初始x坐标
+            y: 100,         // 小球初始y坐标
+            r: 20,          // 小球半径
+            res: 0.02,      // 滚动所受阻力
+            g: 2,           // 重力加速度
+            trans: 0.6,     // 碰撞能量转化效率
+            vx: -20,        // 小球x轴方向初速度
+            vy: 0,          // 小球y轴方向初速度
+            color:"#0000ff" // 小球颜色
+        };
+        var canvas = document.getElementById("myCanvas");
+        var context = canvas.getContext("2d");
+        // 用js给画布设置宽高
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+
+        // window.onload = function() {
+        document.getElementById("myCanvas").onclick = function() {
+            setInterval(
+                function() {
+                    render(context);
+                    update()
+                },
+                40
+            );
+        };
+
+        // 绘制小球的函数
+        function render(context) {
+            // 清除画布上的内容
+            context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+            // 设置小球填充颜色
+            context.fillStyle = ball.color;
+            // 开始绘制路径
+            context.beginPath();
+            // 绘制一个圆形的小球
+            context.arc(ball.x, ball.y, ball.r, 0, 2*Math.PI);
+            // 闭合路径
+            context.closePath;
+            // 内部填充
+            context.fill();
+        };
+
+        // 控制小球运动轨迹的函数，仅仅只是初中学习的牛顿第一运动定律
+        function update() {
+            // 设置x轴方向小球的移动
+            ball.x += ball.vx;
+            // 设置y轴方向小球的移动
+            ball.y += ball.vy;
+
+            // 当小球撞到地板时，让小球反弹，同时考虑摩擦系数，小球反弹后能量衰减
+            if(ball.y >= HEIGHT - ball.r) {
+                ball.y = HEIGHT - ball.r;
+                ball.vy = -ball.vy * ball.trans;
+                //当小球撞到地板时速度小于2，就让小球y轴速度直接降为0
+                if(Math.abs(ball.vy) <= 2) {
+                    ball.vy = 0;
+                }
+            } else {
+                // 设置y轴方向小球的速度变化
+                ball.vy += ball.g;
+            };
+
+            // 当小球撞到左边墙壁时，反弹，同时能量衰减
+            if(ball.x <= ball.r) {
+                ball.x = ball.r;
+                ball.vx = -ball.vx * ball.trans;
+            };
+
+            // 当小球撞到右边墙壁时反弹
+            if(ball.x >= WIDTH - ball.r) {
+                ball.x = WIDTH - ball.r;
+                ball.vx = -ball.vx * ball.trans;
+            };
+
+            // 模拟小球在x轴方向滚动时受空气阻力的衰减 
+            // 如果x轴方向速度小于0.1了，就让小球在x轴方向速度为0
+            if(Math.abs(ball.vx) < 0.1) {
+                ball.vx = 0;
+            } else if(ball.vx >= 0.1) {
+                ball.vx -= ball.res;
+            } else if(ball.vx <= -0.1) {
+                ball.vx += ball.res;
+            };
+        };
+    </script>
+</body>
+</html>
